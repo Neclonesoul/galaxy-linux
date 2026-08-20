@@ -1,0 +1,7 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set +e
+printf '[*] Stopping Galaxy Linux desktop...\n'
+proot-distro kill galaxy-linux >/dev/null 2>&1
+pkill -f 'termux-x11' >/dev/null 2>&1
+pulseaudio --kill >/dev/null 2>&1
+printf '[+] Desktop stopped.\n'

@@ -1,0 +1,33 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -Eeuo pipefail
+
+CONFIG="$HOME/.config/galaxy-linux/config"
+[[ -f "$CONFIG" ]] && source "$CONFIG"
+CONTAINER_NAME="${CONTAINER_NAME:-galaxy-linux}"
+DISPLAY_NUMBER="${DISPLAY_NUMBER:-:1}"
+
+cleanup_old() {
+  pkill -f 'termux-x11' 2>/dev/null || true
+  pulseaudio --kill 2>/dev/null || true
+}
+
+cleanup_old
+sleep 1
+
+printf '[*] Starting PulseAudio...\n'
+pulseaudio --start --exit-idle-time=-1
+# Native TCP is loopback-only. Ignore duplicate-module errors.
+pactl load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1 >/dev/null 2>&1 || true
+
+printf '[*] Starting Termux:X11 on %s...\n' "$DISPLAY_NUMBER"
+termux-x11 "$DISPLAY_NUMBER" -ac >/dev/null 2>&1 &
+sleep 2
+
+printf '[*] Starting XFCE in %s...\n' "$CONTAINER_NAME"
+printf '[*] Open the Termux:X11 Android app if the desktop is not already visible.\n\n'
+
+exec proot-distro login "$CONTAINER_NAME" --shared-tmp -- env \
+  DISPLAY="$DISPLAY_NUMBER" \
+  PULSE_SERVER=127.0.0.1 \
+  XDG_RUNTIME_DIR=/tmp/runtime-root \
+  bash -lc 'mkdir -p "$XDG_RUNTIME_DIR"; chmod 700 "$XDG_RUNTIME_DIR"; exec dbus-run-session -- startxfce4'
