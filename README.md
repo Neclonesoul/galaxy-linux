@@ -1,236 +1,441 @@
 # Galaxy Linux
 
-**Arch Linux ARM userspace + XFCE desktop for Samsung Galaxy phones, tablets and DeX — rootless through Termux, PRoot-Distro and Termux:X11.**
+> **Arch Linux ARM + XFCE desktop for Samsung Galaxy and Android ---
+> powered by Termux:X11.**
 
-> Unofficial community project. Not affiliated with Samsung, Termux, Arch Linux or Arch Linux ARM.
+**Rootless • PRoot • Arch Linux ARM • XFCE • Termux:X11 • DeX-friendly**
 
-Galaxy Linux turns a modern ARM64 Android device into a surprisingly capable pocket Linux workstation without rooting the phone. It installs a pinned Arch Linux ARM userspace inside PRoot-Distro, connects it to Termux:X11, bridges audio with PulseAudio, and gives you simple start/stop commands.
+Galaxy Linux turns a compatible Android phone or tablet into a portable
+Linux workstation without rooting the device, replacing Android, or
+unlocking the bootloader.
 
-It is aimed first at **Samsung Galaxy S/Tab devices and Samsung DeX**, but compatible ARM64 Android hardware can work too.
+It runs an **Arch Linux ARM userspace** through PRoot. **XFCE** is the
+graphical desktop running inside Arch, and **Termux:X11** displays that
+desktop on Android or a Samsung DeX monitor.
 
-## What it is
+> \[!IMPORTANT\] Galaxy Linux is an independent community project. It is
+> not affiliated with or endorsed by Samsung, Arch Linux, Termux, or
+> Termux:X11.
 
-- Arch Linux ARM userspace with `pacman`
-- XFCE desktop
-- Firefox, Git, SSH, Curl, editors and basic developer utilities
-- Termux:X11 display integration
-- PulseAudio integration
-- External display / Samsung DeX friendly
-- Rootless: no bootloader unlock, Magisk or custom kernel required
-- Snapdragon/Adreno detection with optional Termux-side Turnip/Zink packages
-- Reversible container install
+------------------------------------------------------------------------
 
-## What it is not
+## Architecture
 
-Galaxy Linux is **not** a virtual machine and it does not replace Android or boot a separate Linux kernel. PRoot intercepts and translates filesystem/system-call behaviour in userspace. Programs that depend on systemd boot, kernel modules, privileged namespaces, Docker-in-Docker, low-level USB access or strict sandboxing may not behave like they do on a normal Arch PC.
+``` text
+Samsung Galaxy / Android
+          │
+          ▼
+        Termux
+          │
+          ▼
+     PRoot-Distro
+          │
+          ▼
+   Arch Linux ARM
+          │
+          ▼
+        XFCE
+          │
+          ▼
+     Termux:X11
+          │
+          ▼
+Phone / Tablet / Samsung DeX
+```
 
-GPU acceleration is also device- and driver-dependent. The installer can prepare the Qualcomm Turnip/Zink host packages when it detects a likely Snapdragon/Adreno device, but the project deliberately does **not** promise that every Linux application inside PRoot will receive native hardware acceleration.
+### Why does an Arch project say XFCE?
 
-## Recommended hardware
+They are different layers.
 
-- ARM64 Samsung Galaxy S / S+ / Ultra or Galaxy Tab S device
-- Snapdragon/Adreno model preferred for experimentation with Turnip
-- 8 GB RAM or more recommended
-- 8–12 GB free storage recommended
-- Samsung DeX, USB-C monitor, dock or HDMI adapter optional
-- Bluetooth/USB keyboard and mouse optional
+-   **Arch Linux ARM** is the Linux userspace/distribution. It supplies
+    the filesystem, shell, libraries, `pacman`, packages and development
+    environment.
+-   **XFCE** is the graphical desktop environment running inside Arch.
+-   **Termux:X11** is the X server/display bridge that lets Android show
+    the Linux desktop.
+-   **Samsung DeX** is an optional Samsung external-display environment.
+
+XFCE does **not** replace Arch. A future Galaxy Linux profile could use
+another desktop environment while still running Arch Linux underneath.
+
+------------------------------------------------------------------------
+
+## Features
+
+-   Arch Linux ARM userspace
+-   Rootless PRoot environment
+-   XFCE desktop
+-   Termux:X11 integration
+-   Samsung DeX-friendly workflow
+-   PulseAudio integration
+-   Start and stop launchers
+-   Existing-installation protection
+-   Repair/reconfiguration mode
+-   Clean uninstall workflow
+-   Optional Developer Edition
+-   Device compatibility reporting
+-   Snapdragon/Adreno-aware graphics setup where supported
+-   Software-rendering fallback where appropriate
+
+------------------------------------------------------------------------
+
+# Quick Start
 
 ## Requirements
 
-1. **Termux from F-Droid or the official Termux GitHub releases.** Avoid obsolete Play Store builds.
-2. **Termux:X11 companion Android app** matching the Termux:X11 package you use.
-3. Android ARM64/aarch64.
-4. Internet connection for the first install.
+Recommended:
 
-## Install
+-   64-bit ARM Android device
+-   Samsung Galaxy S/Tab class device or equivalent
+-   current Termux installation
+-   Termux:X11 companion app
+-   at least **5 GB free storage** for a practical desktop installation
+-   reliable Internet connection during installation
+-   keyboard and mouse for serious desktop use
+-   Samsung DeX for the best external-monitor experience
 
-### Recommended: inspect, clone, then run
+**Samsung DeX is recommended, not required.**
 
-The most transparent installation method is still to clone the repository so you can inspect the scripts before running them:
+> \[!NOTE\] PRoot is not a virtual machine and Galaxy Linux does not
+> boot a separate Linux kernel. The Arch userspace runs on top of
+> Android's existing kernel.
 
-```bash
-pkg update -y
-pkg install git -y
-git clone https://github.com/Neclonesoul/galaxy-linux.git
-cd galaxy-linux
-chmod +x install.sh uninstall.sh bin/* scripts/* profiles/developer/*
-./install.sh --profile developer
-```
+## 1. Install Termux and Termux:X11
 
-The installer currently pins this Arch Linux ARM image:
+Install a current supported Termux build and the Termux:X11 companion
+application from their official project sources.
 
-```text
-danhunsaker/archlinuxarm:20260517
-```
+Galaxy Linux needs both the Termux-side `termux-x11` command and the
+Android Termux:X11 app to display the desktop.
 
-### Version-pinned one-command install
+## 2. Install Galaxy Linux
 
-For users who prefer a one-liner, release `v0.1.1` can bootstrap the complete repository from its matching Git tag:
+### Stable Base Edition --- v0.1.1
 
-```bash
+``` bash
 curl -fsSL https://raw.githubusercontent.com/Neclonesoul/galaxy-linux/v0.1.1/install.sh | bash
 ```
 
-Developer Edition:
+The version is deliberately pinned. This prevents the command from
+silently executing a future, untested version of `main`.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/Neclonesoul/galaxy-linux/v0.1.1/install.sh | bash -s -- --profile developer
-```
+The installer prepares the required Termux packages, creates the Arch
+environment, configures XFCE and generates the Galaxy Linux launchers.
 
-The one-line path is deliberately **version pinned**. It does not fetch an arbitrary future state of `main`; the small bootstrap script downloads the complete `v0.1.1` source archive and continues from that release. If you do not trust `curl | bash`, use the clone-and-inspect method above.
+## 3. Start the desktop
 
-Re-running the same release is non-destructive: an existing Galaxy Linux container is not replaced, and completed package bootstraps are skipped. To deliberately re-run configuration and package setup:
-
-```bash
-./install.sh --profile developer --repair
-```
-
-Pinning avoids silently changing the entire userspace when an upstream `latest` tag moves.
-
-## Install profiles
-
-### Developer Edition — recommended for coding/publishing
-
-```bash
-./install.sh --profile developer
-```
-
-Adds GitHub CLI, Hugo, Node.js/npm, Python, OpenSSH, ImageMagick, build tools, ShellCheck and optional embedded/serial tooling. Cloudflare Wrangler is installed **per project**, not globally.
-
-Verify it after installation:
-
-```bash
-~/galaxy-dev-check
-```
-
-See `docs/DEVELOPER-EDITION.md`.
-
-### Base desktop
-
-```bash
-./install.sh --profile base
-```
-
-Installs the Arch/XFCE workstation without the larger development bundle.
-
-## Start the desktop
-
-Open the **Termux:X11** Android app, then in Termux run:
-
-```bash
+``` bash
 ~/start-galaxy-linux
 ```
 
-To enter the Arch shell without starting XFCE:
+Open **Termux:X11** to view the desktop.
 
-```bash
-~/galaxy-linux-shell
-```
+## 4. Stop the desktop
 
-To stop the desktop:
-
-```bash
+``` bash
 ~/stop-galaxy-linux
 ```
 
-## Arch basics
+------------------------------------------------------------------------
 
-Inside the container:
+# Developer Edition
 
-```bash
-pacman -Syu
-pacman -Ss python
-pacman -S python
-python --version
+Galaxy Linux Developer Edition extends the base desktop into a mobile
+development workstation.
+
+It is intended for workflows such as:
+
+``` text
+Galaxy → Termux → Arch → Code → Git → GitHub → Build → Deploy
 ```
 
-## Samsung DeX workflow
+Developer tooling includes support for:
 
-A practical layout is:
+-   Git
+-   GitHub CLI
+-   Hugo
+-   Node.js and npm
+-   Python, pip/venv and pipx
+-   OpenSSH
+-   rsync
+-   ImageMagick
+-   jq
+-   ripgrep
+-   fd
+-   ShellCheck
+-   tmux
+-   Clang
+-   CMake
+-   general build tooling
+-   Cloudflare Wrangler project workflows
+-   optional Arduino/ESP development tooling
 
-1. Connect the Galaxy to a DeX display or dock.
-2. Open Termux and Termux:X11.
-3. Run `~/start-galaxy-linux`.
-4. Put Termux:X11 full-screen on the external display.
-5. Use Android/DeX for native apps and XFCE for Linux applications.
+### Install Developer Edition directly
 
-This keeps Android fully available while Linux runs as another application stack.
-
-## Graphics modes
-
-### Compatibility mode
-
-This is the baseline. It prioritizes getting XFCE and ordinary X11 applications running reliably.
-
-### Snapdragon / Adreno experimental path
-
-When the installer sees a Qualcomm/Adreno-like hardware signature, it attempts to install these Termux-host packages:
-
-```text
-mesa-zink
-vulkan-loader-android
-mesa-vulkan-icd-freedreno
+``` bash
+curl -fsSL https://raw.githubusercontent.com/Neclonesoul/galaxy-linux/v0.1.1/install.sh \
+  | bash -s -- --profile developer
 ```
 
-That prepares a Turnip/Zink-capable host environment, but PRoot graphics acceleration is not a universal plug-and-play boundary. Future releases can add tested per-device profiles rather than pretending that one environment-variable recipe fits every Galaxy generation.
+### Check the developer environment
 
-## Why does an Arch Linux project say XFCE?
+After installation:
 
-**Arch Linux ARM is the distribution/userspace. XFCE is the graphical desktop environment installed inside it.** `pacman`, Arch packages, libraries and the Linux filesystem come from Arch; the panels, application menu, windows and desktop you see in Termux:X11 come from XFCE. Replacing XFCE with LXQt, KDE Plasma or a window manager would still leave the underlying environment as Arch Linux ARM.
+``` bash
+~/galaxy-dev-check
+```
 
-XFCE is light, conventional and comparatively forgiving in PRoot/X11 environments. KDE Plasma and GNOME are possible experiments, but they add more services, sandboxing assumptions and resource usage. Galaxy Linux therefore chooses reliability over screenshots.
+### Cloudflare projects
 
-## Troubleshooting
+Wrangler should normally be installed per project:
 
-### Black screen with cursor
+``` bash
+mkdir -p ~/Projects
+cd ~/Projects/my-project
 
-Stop the session:
+npm install --save-dev wrangler@latest
+npx wrangler login
+npx wrangler dev
+npx wrangler deploy
+```
 
-```bash
+------------------------------------------------------------------------
+
+# Daily Use
+
+Start the graphical desktop:
+
+``` bash
+~/start-galaxy-linux
+```
+
+Enter the Arch shell without launching XFCE:
+
+``` bash
+~/galaxy-linux-shell
+```
+
+Stop the graphical environment:
+
+``` bash
 ~/stop-galaxy-linux
 ```
 
-Then test Termux:X11 with legacy drawing by editing the `termux-x11` line in `~/start-galaxy-linux` to include:
+A useful project layout is:
 
-```text
--legacy-drawing
+``` bash
+mkdir -p ~/Projects
+cd ~/Projects
 ```
 
-### Wrong colours
+From there you can clone and work with normal development repositories:
 
-Termux:X11 documents `-force-bgra` as a workaround on affected devices.
-
-### XFCE cannot connect to display
-
-Confirm the launcher is using `--shared-tmp`. Termux:X11 requires the PRoot session to share the host temporary directory so the X11 socket is visible; the launcher therefore uses `--shared-tmp`.
-
-### Audio missing
-
-From Termux, restart the launcher. It restarts PulseAudio and exports the loopback Pulse server into the container.
-
-### Package installation fails
-
-Arch Linux ARM is rolling software. First try:
-
-```bash
-~/galaxy-linux-shell
-pacman -Syu
+``` bash
+git clone <repository>
+cd <repository>
 ```
 
-If the pinned image itself becomes incompatible, open an issue with your device model, Android version and the exact error.
+Examples:
 
-## Uninstall
+``` bash
+hugo server --bind 0.0.0.0
+```
 
-```bash
-cd galaxy-linux
+``` bash
+npm install
+npm run dev
+```
+
+``` bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+------------------------------------------------------------------------
+
+# Repair and Reconfiguration
+
+Galaxy Linux is designed to detect an existing installation rather than
+silently destroying it.
+
+To intentionally rerun base configuration:
+
+``` bash
+./install.sh --repair
+```
+
+For Developer Edition:
+
+``` bash
+./install.sh --profile developer --repair
+```
+
+Do not use repair mode as a substitute for backing up important work.
+
+------------------------------------------------------------------------
+
+# Graphics Acceleration
+
+Graphics support on Android is hardware- and software-dependent.
+
+Snapdragon Galaxy devices using Qualcomm Adreno graphics may be able to
+use the Turnip/Zink graphics stack. Galaxy Linux detects relevant device
+information and can configure an accelerated path where appropriate.
+
+**Hardware acceleration is not guaranteed.**
+
+Compatibility can vary with:
+
+-   Samsung model
+-   Snapdragon or Exynos SoC
+-   GPU generation
+-   Android version
+-   One UI version
+-   Termux version
+-   Termux:X11 version
+-   Mesa/Turnip versions
+-   individual Linux applications
+
+A software-rendering fallback is preferable to pretending unsupported
+hardware is accelerated.
+
+------------------------------------------------------------------------
+
+# Samsung DeX
+
+DeX is not required to run Galaxy Linux, but it is one of the project's
+primary use cases.
+
+A Galaxy phone connected to a monitor, keyboard and mouse can provide:
+
+-   Android applications through DeX
+-   a conventional Arch shell
+-   an XFCE Linux desktop
+-   Git-based development
+-   local web development
+-   SSH administration
+-   static-site development
+-   Python and Node.js workflows
+
+Galaxy Linux does not replace DeX. It adds a Linux workstation
+environment that can be used alongside it.
+
+------------------------------------------------------------------------
+
+# USB, Arduino and ESP Development
+
+Developer Edition can provide compilers, command-line tooling and
+embedded-development utilities.
+
+However, PRoot does not automatically grant unrestricted access to
+Android USB devices. Android remains responsible for USB permissions and
+device ownership.
+
+Therefore:
+
+-   source editing and compilation can work normally;
+-   firmware/toolchain preparation can work normally;
+-   direct USB flashing may require additional Android/Termux
+    integration;
+-   support varies by device and adapter.
+
+Do not assume that a USB device visible to Android will automatically
+appear as a conventional `/dev/ttyUSB*` device inside Arch.
+
+------------------------------------------------------------------------
+
+# Troubleshooting
+
+## Black screen or cursor only
+
+Termux:X11 documents compatibility options for devices that display a
+black screen or rendering problems. Consult the upstream Termux:X11
+documentation before changing the Galaxy Linux launcher.
+
+## XFCE does not appear
+
+Check that:
+
+1.  Termux:X11 is installed.
+2.  the Termux-side X11 packages are installed.
+3.  the Galaxy Linux container exists.
+4.  the X11 server is running.
+5.  the PRoot session shares the required X11 temporary/socket path.
+6.  `DISPLAY` is set by the launcher.
+
+## Audio does not work
+
+Restart the Galaxy Linux session:
+
+``` bash
+~/stop-galaxy-linux
+~/start-galaxy-linux
+```
+
+## Developer tool missing
+
+Run:
+
+``` bash
+~/galaxy-dev-check
+```
+
+Then rerun the developer profile if required:
+
+``` bash
+./install.sh --profile developer --repair
+```
+
+------------------------------------------------------------------------
+
+# Uninstall
+
+From a cloned copy of the repository:
+
+``` bash
 ./uninstall.sh
 ```
 
-The uninstaller deletes the Galaxy Linux container and launchers but intentionally leaves shared Termux packages installed. Removing packages such as `proot-distro`, PulseAudio or Termux:X11 automatically could break unrelated Termux projects.
+Read the confirmation carefully.
 
-## Repository layout
+> \[!WARNING\] Removing the Arch container permanently destroys files
+> stored exclusively inside that container. Back up anything important
+> first.
 
-```text
+The uninstaller should not be treated as an Android/Termux reset tool.
+Shared Termux packages may also be used by unrelated projects.
+
+------------------------------------------------------------------------
+
+# Device Compatibility
+
+Galaxy Linux is intended to become community-tested rather than relying
+on vague claims such as "works on all Samsung phones."
+
+Useful device reports include:
+
+  Field            Example
+  ---------------- -----------------------------------
+  Device           Galaxy S-series / Tab S-series
+  SoC              Snapdragon / Exynos
+  Android          Version
+  One UI           Version
+  Termux           Version/source
+  Termux:X11       Version
+  Display          Phone / DeX / external resolution
+  XFCE             Working / partial / failed
+  Audio            Working / partial / failed
+  GPU renderer     Reported renderer
+  Keyboard/mouse   Working / issues
+  Notes            Known problems or fixes
+
+See `docs/DEVICE-REPORT.md` for the reporting format.
+
+------------------------------------------------------------------------
+
+# Repository Layout
+
+``` text
 galaxy-linux/
 ├── README.md
 ├── LICENSE
@@ -253,38 +458,114 @@ galaxy-linux/
     └── WORKFLOW.md
 ```
 
-## Device reports wanted
+------------------------------------------------------------------------
 
-The most useful contribution is a reproducible device report: Galaxy model, SoC, GPU, Android version, RAM, DeX mode, whether XFCE launches, audio status, external resolution and renderer information.
+# Versioning
 
-See `docs/DEVICE-REPORT.md`.
+The recommended public installer is pinned to a release:
 
-## Security model
+``` text
+v0.1.1
+```
 
-This project is designed as a development/workstation environment, not a security boundary. PRoot is not isolation equivalent to a VM. Do not run untrusted binaries merely because they are inside the container.
+Using a tagged release gives users a reproducible entry point and
+prevents an installation command copied months ago from unexpectedly
+following a changed `main` branch.
 
-## Roadmap
+Developers can clone the repository directly when testing current
+development:
 
-- Tested Galaxy device compatibility table
-- DeX DPI/resolution profiles
-- Developer Edition profile with Python, Node.js, Hugo, GitHub CLI and reproducible project-local Cloudflare tooling
-- Optional VS Code/code-server profile
-- Device-specific Turnip/Zink acceleration profiles backed by actual renderer tests
-- Backup/export command for the Linux home directory
-- Installer self-test and diagnostic report
+``` bash
+git clone https://github.com/Neclonesoul/galaxy-linux.git
+cd galaxy-linux
+```
+
+------------------------------------------------------------------------
+
+# Security
+
+Piping remote scripts into a shell is convenient but carries risk.
+
+Before using the one-line installer, security-conscious users should
+inspect the tagged script first or clone the repository and run it
+locally:
+
+``` bash
+git clone --branch v0.1.1 --depth 1 \
+  https://github.com/Neclonesoul/galaxy-linux.git
+
+cd galaxy-linux
+less install.sh
+./install.sh
+```
+
+Report security-sensitive issues according to `SECURITY.md`.
+
+------------------------------------------------------------------------
+
+# Contributing
+
+Testing across different Samsung and Android hardware is particularly
+valuable.
+
+Useful contributions include:
+
+-   verified device reports
+-   installer fixes
+-   Termux:X11 compatibility improvements
+-   documentation
+-   graphics compatibility findings
+-   DeX behaviour reports
+-   reproducible bug reports
+-   Developer Edition improvements
+
+See `CONTRIBUTING.md` before submitting changes.
+
+------------------------------------------------------------------------
+
+# Project Status
+
+**Early public release / active development.**
+
+Galaxy Linux should currently be treated as an experimental workstation
+project rather than a production operating system.
+
+The immediate goals are:
+
+1.  reliable installation on supported ARM64 Android hardware;
+2.  repeatable Arch + XFCE startup through Termux:X11;
+3.  documented Samsung DeX compatibility;
+4.  reproducible device testing;
+5.  a useful Developer Edition;
+6.  conservative, evidence-based GPU support.
+
+------------------------------------------------------------------------
+
+# Acknowledgements
+
+Galaxy Linux builds on the work of the wider open-source ecosystem,
+particularly:
+
+-   Termux
+-   Termux:X11
+-   PRoot
+-   PRoot-Distro
+-   Arch Linux / Arch Linux ARM
+-   XFCE
+-   Mesa
+-   the many upstream projects included in Developer Edition
+
+Please support and respect the upstream projects and their licenses.
+
+------------------------------------------------------------------------
 
 ## License
 
-MIT. See `LICENSE`.
+See [`LICENSE`](LICENSE) for this repository's licensing terms.
 
-## Upstream references
+------------------------------------------------------------------------
 
-Galaxy Linux intentionally builds on existing upstream projects rather than hiding them behind a branded installer:
+**Galaxy Linux**
 
-- Termux: https://github.com/termux/termux-app
-- PRoot-Distro: https://github.com/termux/proot-distro
-- Termux:X11: https://github.com/termux/termux-x11
-- Arch Linux ARM: https://archlinuxarm.org/
-- Cloudflare Wrangler: https://developers.cloudflare.com/workers/wrangler/
-
-Before reporting a Galaxy Linux bug, it is useful to determine whether the issue occurs in Termux, PRoot-Distro, Termux:X11, the Arch userspace, or Galaxy Linux's own launcher/configuration layer.
+*Your phone already has the computer. This project gives it a Linux
+desk.*
