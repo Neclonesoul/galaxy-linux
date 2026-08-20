@@ -1,6 +1,6 @@
 # Galaxy Linux
 
-**A rootless Arch Linux ARM desktop for Samsung Galaxy phones, tablets and DeX — powered by Termux, PRoot-Distro, Termux:X11 and XFCE.**
+**Arch Linux ARM userspace + XFCE desktop for Samsung Galaxy phones, tablets and DeX — rootless through Termux, PRoot-Distro and Termux:X11.**
 
 > Unofficial community project. Not affiliated with Samsung, Termux, Arch Linux or Arch Linux ARM.
 
@@ -44,7 +44,9 @@ GPU acceleration is also device- and driver-dependent. The installer can prepare
 
 ## Install
 
-For a public release, clone the repository instead of piping an unaudited remote script directly into a shell:
+### Recommended: inspect, clone, then run
+
+The most transparent installation method is still to clone the repository so you can inspect the scripts before running them:
 
 ```bash
 pkg update -y
@@ -59,6 +61,28 @@ The installer currently pins this Arch Linux ARM image:
 
 ```text
 danhunsaker/archlinuxarm:20260517
+```
+
+### Version-pinned one-command install
+
+For users who prefer a one-liner, release `v0.1.1` can bootstrap the complete repository from its matching Git tag:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Neclonesoul/galaxy-linux/v0.1.1/install.sh | bash
+```
+
+Developer Edition:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Neclonesoul/galaxy-linux/v0.1.1/install.sh | bash -s -- --profile developer
+```
+
+The one-line path is deliberately **version pinned**. It does not fetch an arbitrary future state of `main`; the small bootstrap script downloads the complete `v0.1.1` source archive and continues from that release. If you do not trust `curl | bash`, use the clone-and-inspect method above.
+
+Re-running the same release is non-destructive: an existing Galaxy Linux container is not replaced, and completed package bootstraps are skipped. To deliberately re-run configuration and package setup:
+
+```bash
+./install.sh --profile developer --repair
 ```
 
 Pinning avoids silently changing the entire userspace when an upstream `latest` tag moves.
@@ -150,7 +174,9 @@ mesa-vulkan-icd-freedreno
 
 That prepares a Turnip/Zink-capable host environment, but PRoot graphics acceleration is not a universal plug-and-play boundary. Future releases can add tested per-device profiles rather than pretending that one environment-variable recipe fits every Galaxy generation.
 
-## Why XFCE?
+## Why does an Arch Linux project say XFCE?
+
+**Arch Linux ARM is the distribution/userspace. XFCE is the graphical desktop environment installed inside it.** `pacman`, Arch packages, libraries and the Linux filesystem come from Arch; the panels, application menu, windows and desktop you see in Termux:X11 come from XFCE. Replacing XFCE with LXQt, KDE Plasma or a window manager would still leave the underlying environment as Arch Linux ARM.
 
 XFCE is light, conventional and comparatively forgiving in PRoot/X11 environments. KDE Plasma and GNOME are possible experiments, but they add more services, sandboxing assumptions and resource usage. Galaxy Linux therefore chooses reliability over screenshots.
 
