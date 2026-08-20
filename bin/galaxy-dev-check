@@ -1,0 +1,31 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -u
+CONTAINER_NAME='galaxy-linux'
+
+printf 'Galaxy Linux Developer Edition — self-check\n'
+printf '===========================================\n\n'
+
+proot-distro login "$CONTAINER_NAME" --shared-tmp -- bash -lc '
+set +e
+check() {
+  local label="$1"; shift
+  if command -v "$1" >/dev/null 2>&1; then
+    printf "[OK]   %-14s " "$label"
+    "$@" 2>&1 | head -n 1
+  else
+    printf "[MISS] %s\n" "$label"
+  fi
+}
+check Git git git --version
+check GitHub-CLI gh gh --version
+check Hugo hugo hugo version
+check Node node node --version
+check npm npm npm --version
+check Python python python --version
+check ImageMagick magick magick -version
+check SSH ssh ssh -V
+check jq jq jq --version
+check ShellCheck shellcheck shellcheck --version
+printf "\nCloudflare Wrangler is intentionally project-local.\n"
+printf "Inside a Node project: npm install --save-dev wrangler@latest && npx wrangler --version\n"
+'

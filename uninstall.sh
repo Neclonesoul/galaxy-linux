@@ -10,7 +10,7 @@ read -r -p "Delete the '$CONTAINER_NAME' container and all files inside it? [y/N
 
 "$HOME/stop-galaxy-linux" 2>/dev/null || true
 proot-distro remove "$CONTAINER_NAME" 2>/dev/null || true
-rm -f "$HOME/start-galaxy-linux" "$HOME/stop-galaxy-linux" "$HOME/galaxy-linux-shell"
+rm -f "$HOME/start-galaxy-linux" "$HOME/stop-galaxy-linux" "$HOME/galaxy-linux-shell" "$HOME/galaxy-dev-check"
 rm -rf "$HOME/.config/galaxy-linux"
 
 echo 'Galaxy Linux container and launchers removed.'

@@ -7,12 +7,27 @@ ARCH_IMAGE='danhunsaker/archlinuxarm:20260517'
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 ROOTFS="$PREFIX/var/lib/proot-distro/containers/$CONTAINER_NAME/rootfs"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 c_reset='\033[0m'; c_blue='\033[1;34m'; c_green='\033[1;32m'; c_yellow='\033[1;33m'; c_red='\033[1;31m'
 info(){ printf "%b[*]%b %s\n" "$c_blue" "$c_reset" "$*"; }
 ok(){ printf "%b[+]%b %s\n" "$c_green" "$c_reset" "$*"; }
 warn(){ printf "%b[!]%b %s\n" "$c_yellow" "$c_reset" "$*"; }
 die(){ printf "%b[x]%b %s\n" "$c_red" "$c_reset" "$*" >&2; exit 1; }
+
+PROFILE='base'
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile) PROFILE="${2:-}"; shift 2;;
+    --developer) PROFILE='developer'; shift;;
+    --base) PROFILE='base'; shift;;
+    -h|--help)
+      printf 'Usage: %s [--profile base|developer] [--developer] [--base]\n' "$0"
+      exit 0;;
+    *) die "Unknown option: $1";;
+  esac
+done
+
+[[ "$PROFILE" == 'base' || "$PROFILE" == 'developer' ]] || die "Profile must be base or developer."
 
 trap 'printf "\n%b[x]%b Installation stopped near line %s.\n" "$c_red" "$c_reset" "$LINENO" >&2' ERR
 
@@ -73,15 +88,25 @@ install -m 0755 "$REPO_DIR/scripts/arch-bootstrap.sh" "$ROOTFS/root/galaxy-linux
 info 'Configuring Arch Linux desktop...'
 proot-distro login "$CONTAINER_NAME" -- /root/galaxy-linux-bootstrap.sh
 
+if [[ "$PROFILE" == 'developer' ]]; then
+  info 'Installing Developer Edition profile...'
+  install -m 0755 "$REPO_DIR/profiles/developer/bootstrap.sh" "$ROOTFS/root/galaxy-linux-developer-bootstrap.sh"
+  proot-distro login "$CONTAINER_NAME" -- /root/galaxy-linux-developer-bootstrap.sh
+fi
+
 info 'Installing launch commands...'
 install -m 0755 "$REPO_DIR/bin/start-galaxy-linux" "$HOME/start-galaxy-linux"
 install -m 0755 "$REPO_DIR/bin/stop-galaxy-linux" "$HOME/stop-galaxy-linux"
+if [[ "$PROFILE" == 'developer' ]]; then
+  install -m 0755 "$REPO_DIR/bin/galaxy-dev-check" "$HOME/galaxy-dev-check"
+fi
 
 mkdir -p "$HOME/.config/galaxy-linux"
 cat > "$HOME/.config/galaxy-linux/config" <<CFG
 CONTAINER_NAME='$CONTAINER_NAME'
 DISPLAY_NUMBER=':1'
 GPU_MODE='$GPU_MODE'
+PROFILE='$PROFILE'
 CFG
 
 cat > "$HOME/galaxy-linux-shell" <<'EOF2'
@@ -97,5 +122,8 @@ printf '1. Install/open the matching Termux:X11 Android companion app.\n'
 printf '2. Start desktop:  %b~/start-galaxy-linux%b\n' "$c_green" "$c_reset"
 printf '3. Stop desktop:   %b~/stop-galaxy-linux%b\n' "$c_green" "$c_reset"
 printf '4. Arch shell:     %b~/galaxy-linux-shell%b\n' "$c_green" "$c_reset"
+if [[ "$PROFILE" == 'developer' ]]; then
+  printf '5. Developer test: %b~/galaxy-dev-check%b\n' "$c_green" "$c_reset"
+fi
 echo
 warn 'PRoot is not a VM and does not provide a separate Linux kernel. Some desktop, sandboxing, systemd and GPU features may differ from a normal Arch PC.'

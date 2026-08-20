@@ -49,10 +49,10 @@ For a public release, clone the repository instead of piping an unaudited remote
 ```bash
 pkg update -y
 pkg install git -y
-git clone https://github.com/YOUR-USERNAME/galaxy-linux.git
+git clone https://github.com/Neclonesoul/galaxy-linux.git
 cd galaxy-linux
-chmod +x install.sh uninstall.sh bin/* scripts/*
-./install.sh
+chmod +x install.sh uninstall.sh bin/* scripts/* profiles/developer/*
+./install.sh --profile developer
 ```
 
 The installer currently pins this Arch Linux ARM image:
@@ -62,6 +62,32 @@ danhunsaker/archlinuxarm:20260517
 ```
 
 Pinning avoids silently changing the entire userspace when an upstream `latest` tag moves.
+
+## Install profiles
+
+### Developer Edition — recommended for coding/publishing
+
+```bash
+./install.sh --profile developer
+```
+
+Adds GitHub CLI, Hugo, Node.js/npm, Python, OpenSSH, ImageMagick, build tools, ShellCheck and optional embedded/serial tooling. Cloudflare Wrangler is installed **per project**, not globally.
+
+Verify it after installation:
+
+```bash
+~/galaxy-dev-check
+```
+
+See `docs/DEVELOPER-EDITION.md`.
+
+### Base desktop
+
+```bash
+./install.sh --profile base
+```
+
+Installs the Arch/XFCE workstation without the larger development bundle.
 
 ## Start the desktop
 
@@ -188,11 +214,17 @@ galaxy-linux/
 ├── uninstall.sh
 ├── bin/
 │   ├── start-galaxy-linux
-│   └── stop-galaxy-linux
+│   ├── stop-galaxy-linux
+│   └── galaxy-dev-check
+├── profiles/
+│   └── developer/
+│       └── bootstrap.sh
 ├── scripts/
 │   └── arch-bootstrap.sh
 └── docs/
-    └── DEVICE-REPORT.md
+    ├── DEVELOPER-EDITION.md
+    ├── DEVICE-REPORT.md
+    └── WORKFLOW.md
 ```
 
 ## Device reports wanted
@@ -209,7 +241,7 @@ This project is designed as a development/workstation environment, not a securit
 
 - Tested Galaxy device compatibility table
 - DeX DPI/resolution profiles
-- Optional developer bundle: Python, Node.js, Hugo, GitHub CLI and Cloudflare tooling
+- Developer Edition profile with Python, Node.js, Hugo, GitHub CLI and reproducible project-local Cloudflare tooling
 - Optional VS Code/code-server profile
 - Device-specific Turnip/Zink acceleration profiles backed by actual renderer tests
 - Backup/export command for the Linux home directory
@@ -218,3 +250,15 @@ This project is designed as a development/workstation environment, not a securit
 ## License
 
 MIT. See `LICENSE`.
+
+## Upstream references
+
+Galaxy Linux intentionally builds on existing upstream projects rather than hiding them behind a branded installer:
+
+- Termux: https://github.com/termux/termux-app
+- PRoot-Distro: https://github.com/termux/proot-distro
+- Termux:X11: https://github.com/termux/termux-x11
+- Arch Linux ARM: https://archlinuxarm.org/
+- Cloudflare Wrangler: https://developers.cloudflare.com/workers/wrangler/
+
+Before reporting a Galaxy Linux bug, it is useful to determine whether the issue occurs in Termux, PRoot-Distro, Termux:X11, the Arch userspace, or Galaxy Linux's own launcher/configuration layer.
